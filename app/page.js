@@ -1,101 +1,191 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import { FaEye, FaEyeSlash, FaEdit, FaTrash, FaCopy, FaSearch } from 'react-icons/fa';
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+const Home = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ site: '', username: '', password: '' });
+  const [passwords, setPasswords] = useState([]);
+  const [editIndex, setEditIndex] = useState(null);
+  const [copiedIndex, setCopiedIndex] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    const savedPasswords = JSON.parse(localStorage.getItem("passwords")) || [];
+    setPasswords(savedPasswords);
+  }, []);
+
+  const savePassword = () => {
+    if (form.site && form.username && form.password) {
+      let updatedPasswords;
+      if (editIndex !== null) {
+        updatedPasswords = passwords.map((item, index) =>
+          index === editIndex ? form : item
+        );
+        setEditIndex(null);
+      } else {
+        updatedPasswords = [...passwords, form];
+      }
+      setPasswords(updatedPasswords);
+      localStorage.setItem("passwords", JSON.stringify(updatedPasswords));
+      setForm({ site: '', username: '', password: '' });
+    } else {
+      alert("Please fill in all fields.");
+    }
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const deletePassword = (index) => {
+    if (window.confirm("Are you sure you want to delete this password?")) {
+      const updatedPasswords = passwords.filter((_, i) => i !== index);
+      setPasswords(updatedPasswords);
+      localStorage.setItem("passwords", JSON.stringify(updatedPasswords));
+    }
+  };
+
+  const editPassword = (index) => {
+    setForm(passwords[index]);
+    setEditIndex(index);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' // This enables smooth scrolling
+    });
+  };
+
+  const toggleShowPassword = (index) => {
+    setPasswords(passwords.map((item, i) =>
+      i === index ? { ...item, show: !item.show } : item
+    ));
+  };
+
+  const copyPassword = (password, index) => {
+    navigator.clipboard.writeText(password).then(() => {
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    });
+  };
+
+  // Filter passwords based on search term
+  const filteredPasswords = passwords.filter(item =>
+    item.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="bg-gradient-to-r from-gray-800 to-gray-900 min-h-screen py-6 mt-16">
+      <div className="mx-auto max-w-2xl sm:max-w-3xl md:max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="text-white flex flex-col gap-3 p-4 sm:p-6 md:p-8 my-4 rounded-2xl bg-gray-800 shadow-md">
+          <input
+            value={form.site}
+            onChange={handleChange}
+            className="rounded-full px-4 py-2 text-base outline-none border border-green-400 focus:border-green-500 transition-transform duration-200 focus:scale-105 bg-gray-900 text-white"
+            type="text"
+            name="site"
+            placeholder="App / Site Name"
+          />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              value={form.username}
+              onChange={handleChange}
+              className="rounded-full px-4 py-2 text-base outline-none border border-green-400 focus:border-green-500 transition-transform duration-200 focus:scale-105 bg-gray-900 text-white w-full sm:w-1/2"
+              type="text"
+              name="username"
+              placeholder="Username👤"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="relative w-full sm:w-1/2">
+              <input
+                value={form.password}
+                onChange={handleChange}
+                className="rounded-full px-4 py-2 pr-12 text-base outline-none border border-green-400 focus:border-green-500 transition-transform duration-200 focus:scale-105 bg-gray-900 text-white w-full"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-4 text-gray-400 hover:text-gray-200 focus:outline-none"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={savePassword}
+            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full px-5 py-3 mt-6 shadow-md transition-transform duration-200 transform hover:scale-105 active:scale-95"
           >
-            Read our docs
-          </a>
+            <Image src="/addPass.gif" alt="Add Password Icon" width={24} height={24} className="w-6 h-6" />
+            <span>{editIndex !== null ? "Update Password" : "Add Password"}</span>
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="text-white flex flex-col gap-3 p-4 sm:p-6 md:p-8 my-4 rounded-2xl bg-gray-800 shadow-md">
+          <h2 className="text-lg font-semibold flex items-center justify-between">
+            <span>Saved Passwords:</span>
+            <div className="relative ml-4 flex-grow">
+              <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 pr-4 py-2 rounded-full border border-green-400 focus:border-green-500 transition-transform duration-200 focus:scale-105 bg-gray-900 text-white w-full max-w-[200px] sm:max-w-xs md:max-w-md"
+                placeholder="Search..."
+              />
+            </div>
+          </h2>
+          {filteredPasswords.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {filteredPasswords.map((item, index) => (
+                <li key={index} className="bg-gray-700 p-3 rounded-md shadow-sm flex justify-between items-start">
+                  <div className="flex flex-col flex-grow">
+                    <strong className="text-green-400">Site:</strong> <span className="break-all">{item.site}</span>
+                    <strong className="text-green-400">Username:</strong> <span className="break-all">{item.username}</span>
+                    <strong className="text-green-400">Password:</strong>
+                    <span className="ml-2 break-all">
+                      {item.show ? item.password : "•".repeat(item.password.length)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      onClick={() => toggleShowPassword(index)}
+                      className="text-gray-400 hover:text-gray-200 focus:outline-none"
+                    >
+                      {item.show ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                    <button
+                      onClick={() => copyPassword(item.password, index)}
+                      className="text-green-400 hover:text-green-500 focus:outline-none"
+                    >
+                      <FaCopy />
+                    </button>
+                    <button
+                      onClick={() => editPassword(index)}
+                      className="text-blue-400 hover:text-blue-500 focus:outline-none"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => deletePassword(index)}
+                      className="text-red-400 hover:text-red-500 focus:outline-none"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                  {copiedIndex === index && <p className="text-green-500 text-sm mt-1">Copied!</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400 mt-3">No passwords saved yet.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;

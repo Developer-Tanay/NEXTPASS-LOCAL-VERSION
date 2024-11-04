@@ -1,0 +1,62 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.nextpass.app"  // Updated syntax for namespace property
+    compileSdk = 33  // Use specific compileSdk version
+
+    defaultConfig {
+        applicationId "com.nextpass.app"
+        minSdk = 21  // Use specific minSdk version
+        targetSdk = 33  // Use specific targetSdk version
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        aaptOptions {
+            // Define assets to ignore, suitable for web apps
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Updated ProGuard file for recent versions
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir {
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+    google()
+    mavenCentral()  // Ensure essential repositories are included
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    // Define explicit versions if not using a centralized version management approach
+    implementation "androidx.appcompat:appcompat:1.5.1"  // Replace with your required version
+    implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"  // Replace with your required version
+    implementation "androidx.core:core-splashscreen:1.0.0"  // Replace with your required version
+    implementation project(':capacitor-android')
+
+    testImplementation "junit:junit:4.13.2"  // Replace with your required version
+    androidTestImplementation "androidx.test.ext:junit:1.1.3"  // Replace with your required version
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.4.0"  // Replace with your required version
+
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+// Apply the Capacitor build script
+apply from: 'capacitor.build.gradle'
+
+// Conditional inclusion of Google services plugin
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.info("google-services.json not found; Google services not applied. Push Notifications may not work.")
+}
